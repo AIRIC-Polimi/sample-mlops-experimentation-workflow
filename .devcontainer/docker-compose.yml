@@ -1,0 +1,54 @@
+version: '3.7'
+
+volumes:
+  minio_data:
+  mysql_data:
+
+
+services:
+  dev-environment:
+    build:
+      context: ../
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      - ..:/workspace:cached
+    # Overrides default command so things don't shut down after the process ends.
+    command: sleep infinity
+
+  mlflow-artifacts-store:
+    restart: always
+    image: minio/minio
+    command: server /data --console-address ':9001' --address ':9000'
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: user
+      MINIO_ROOT_PASSWORD: p4ssword
+    volumes:
+      - minio_data:/data
+
+  mlflow-backend-store:
+    restart: always
+    image: mysql:8.0.19
+    environment:
+      MYSQL_DATABASE: mlflow_db
+      MYSQL_USER: mlflow_user
+      MYSQL_PASSWORD: mlflow_password
+      MYSQL_ROOT_PASSWORD: mysql_root_pw
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  mlflow-server:
+    restart: always
+    image: larribas/mlflow
+    depends_on:
+      - mlflow-backend-store
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://mlflow-artifacts-store:9000
+      AWS_ACCESS_KEY_ID: user
+      AWS_SECRET_ACCESS_KEY: p4ssword
+    ports:
+      - "5000:5000"
+    entrypoint: ""
+    command: mlflow server --backend-store-uri mysql+pymysql://mlflow_user:mlflow_password@mlflow-backend-store:3306/mlflow_db --default-artifact-root s3://mlflow/ --host 0.0.0.0
