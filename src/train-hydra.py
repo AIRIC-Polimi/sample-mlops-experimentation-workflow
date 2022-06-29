@@ -81,6 +81,12 @@ def main(cfg: DictConfig) -> None:
             R2: {r2}"""
         )
 
+        mlflow.sklearn.log_model(
+            model,
+            artifact_path="diabetes-elasticnet",
+            registered_model_name="diabetes-elasticnet"
+        )
+
 if __name__ == "__main__":
     #pylint: disable=no-value-for-parameter
     main()
