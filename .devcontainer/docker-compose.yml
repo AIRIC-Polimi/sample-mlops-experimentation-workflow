@@ -12,6 +12,8 @@ services:
       dockerfile: .devcontainer/Dockerfile
     volumes:
       - ..:/workspace:cached
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow-server:5000
     # Overrides default command so things don't shut down after the process ends.
     command: sleep infinity
 
@@ -41,7 +43,9 @@ services:
 
   mlflow-server:
     restart: always
-    image: larribas/mlflow
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile-mlflow
     depends_on:
       - mlflow-backend-store
     environment:
@@ -51,4 +55,4 @@ services:
     ports:
       - "5000:5000"
     entrypoint: ""
-    command: mlflow server --backend-store-uri mysql+pymysql://mlflow_user:mlflow_password@mlflow-backend-store:3306/mlflow_db --default-artifact-root s3://mlflow/ --host 0.0.0.0
+    command: mlflow server --backend-store-uri mysql+pymysql://mlflow_user:mlflow_password@mlflow-backend-store:3306/mlflow_db --artifacts-destination s3://mlflow/ --serve-artifacts --host 0.0.0.0
