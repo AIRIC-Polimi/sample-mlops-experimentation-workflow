@@ -4,6 +4,12 @@
 
 import time
 import mlflow
+
+# Configure mlflow to automatically log metrics and the trained model
+# NOTE: it needs to be done before importing sklearn metrics to work properly
+#pylint: disable=wrong-import-position
+mlflow.sklearn.autolog(log_models=True)
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
@@ -27,9 +33,6 @@ def main():
 
     # Wrap everything in a mlflow run
     with mlflow.start_run(run_name="diabetes"):
-
-        # Configure mlflow to automatically log metrics and the trained model
-        mlflow.sklearn.autolog(log_models=True)
 
         # Set random seed
         random_seed = 42
@@ -65,11 +68,7 @@ def main():
         mlflow.log_metric("fit_time", time.time() - start_time)
         predicted_qualities = model.predict(test_x)
         (rmse, mae, r2) = eval_metrics(test_y, predicted_qualities)
-        mlflow.log_metrics({
-            "rmse": rmse,
-            "mae": mae,
-            "r2": r2
-        })
+        mlflow.log_metric("root_mean_squared_error_test_x", rmse)
 
         # Print out ElasticNet model metrics
         print(f"""Elasticnet model (alpha={alpha}, l1_ratio={l1_ratio}):
