@@ -1,0 +1,5 @@
+random_seed: 42
+
+params:
+  alpha: 0.05
+  l1_ratio: 0.05
